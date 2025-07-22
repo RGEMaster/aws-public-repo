@@ -1,0 +1,36 @@
+{
+  "builders": [
+    {
+      "boot_wait": "{{user `boot_wait`}}",
+      "communicator": "winrm",
+      "cpus": "{{user `numvcpus`}}",
+      "disk_size": "{{user `disk_size`}}",
+      "enable_secure_boot": true,
+      "generation": 2,
+      "iso_checksum": "sha256:{{user `iso_checksum`}}",
+      "iso_url": "{{user `iso_path`}}",
+      "memory": "{{user `memsize`}}",
+      "shutdown_command": "shutdown /s /t 5 /f /d p:4:1 /c \"Packer Shutdown\"",
+      "shutdown_timeout": "30m",
+      "switch_name": "Default Switch",
+      "type": "hyperv-iso",
+      "vm_name": "{{user `vm_name`}}",
+      "winrm_insecure": true,
+      "winrm_password": "{{user `winrm_password`}}",
+      "winrm_timeout": "4h",
+      "winrm_use_ssl": true,
+      "winrm_username": "{{user `winrm_username`}}"
+    }
+  ],
+  "variables": {
+    "boot_wait": "10s",
+    "disk_size": "40960",
+    "iso_checksum": "917526AF51E846F1D9CD91DE36B9C65A59A0C960C6BBFB37AE802A022922F55D",
+    "iso_path": "C:/Users/AlexT/desktop/unattend2022.iso",
+    "memsize": "2048",
+    "numvcpus": "2",
+    "vm_name": "Win2022_HyperV",
+    "winrm_password": "packer",
+    "winrm_username": "Administrator"
+  }
+}

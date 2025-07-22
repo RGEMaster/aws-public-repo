@@ -1,0 +1,10 @@
+#packer generation 2 windows 2022 unattended iso (gen 2 doesn't do floppies for hyper-v)
+
+oscdimg -n -m -o unattendedfiles unattend.iso
+
+#Can't use packer for autounattend on hyper-v, you MUST inject into the iso
+oscdimg -m -o -u2 -udfver102 -lUNATTEND -b"etfsboot.com" "C:\Users\AlexT\Desktop\w2022ua" "unattend2022.iso"
+
+#get checksum of ISO, change locale for other iso (tried and tested method, had issues with certutil)
+$fileiso = "C:\Users\AlexT\desktop\unattend2022.iso"
+Get-FileHash -Algorithm SHA256 $fileiso

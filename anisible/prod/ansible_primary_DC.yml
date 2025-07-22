@@ -1,0 +1,65 @@
+---
+- name: Provision Hyper-V VM
+  hosts: hyperv_host
+  gather_facts: no
+  vars:
+    vm_name: "DC01"
+    vm_memory: 4096MB
+    vm_vhd_path: "C:\\Hyper-V\\BaseImages\\Win2019-Prepared.vhdx"
+    switch_name: "Default Switch"
+    vm_admin_password: "WinRMAdminPass"
+    vm_ip: "192.168.1.101"
+
+  tasks:
+    - name: Create VM on Hyper-V
+      win_shell: |
+        $vmName = "{{ vm_name }}"
+        if (!(Get-VM -Name $vmName -ErrorAction SilentlyContinue)) {
+            New-VM -Name $vmName `
+                   -MemoryStartupBytes {{ vm_memory }} `
+                   -Generation 2 `
+                   -VHDPath "{{ vm_vhd_path }}" `
+                   -SwitchName "{{ switch_name }}"
+        }
+        Set-VM -Name $vmName -ProcessorCount 2
+        Start-VM -Name $vmName
+
+    - name: Wait for initial boot
+      pause:
+        minutes: 1
+
+- name: Promote Windows Server to Domain Controller
+  hosts: dc_target
+  gather_facts: no
+  vars:
+    ansible_user: Administrator
+    ansible_password: "{{ vm_admin_password }}"
+    ansible_connection: winrm
+    ansible_winrm_server_cert_validation: ignore
+    domain_name: "atgdev.com"
+    safe_mode_password: "P@ssw0rd123!"
+
+  tasks:
+    - name: Wait until WinRM is ready
+      wait_for:
+        host: "{{ inventory_hostname }}"
+        port: 5985
+        timeout: 300
+        state: started
+
+    - name: Install AD-Domain-Services feature
+      win_feature:
+        name: AD-Domain-Services
+        include_management_tools: yes
+        state: present
+
+    - name: Promote to new Domain Controller
+      microsoft.ad.domain:
+        dns_domain_name: "{{ domain_name }}"
+        safe_mode_password: "{{ safe_mode_password }}"
+      register: promote_result
+
+    - name: Reboot if required
+      win_reboot:
+        msg: "Rebooting after DC promotion"
+      when: promote_result.reboot_required
